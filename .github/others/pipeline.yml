@@ -1,0 +1,256 @@
+name: Automate Build, Testing, Containerization and Deployment
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: pulling git repo
+        uses: actions/checkout@v2
+        # for backend(django-app)
+      - name: Checkout files
+        uses: Bhacaz/checkout-files@v2
+        with:
+          files: homeservice-backend #list of files and can also be a folder
+      - name: install python version 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - name: update pip
+        run: python -m pip install --upgrade pip
+      - name: install dependencies
+        run: pip install -r requirements.txt
+  #         #for frontend(vue-app)
+  #       - name: Checkout files
+  #         uses: Bhacaz/checkout-files@v2
+  #         with:
+  #           files: homeservice-frontend
+  #       - name: install node version 16
+  #         uses: actions/setup-node@v2
+  #         with:
+  #           node-version: "16.x"
+  #       - name: install dependencies
+  #         run: npm install
+
+  test:
+    #     environment:
+    #       name: testing
+    #     # env:
+    #     # services:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Testing Applications
+        uses: actions/checkout@v2
+      #testing for django application
+      - name: Testing Djnago Application
+        run: pip install pytest
+          pytest
+      #testing for vue application
+      - name: Testing Vue Application
+        run: npm test
+
+  containerization:
+    #     environment:
+    #       name: containerization
+    #     # env:
+    #     # services:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Dockerizing Application Login to Docker Hub 
+        uses: docker/login-action@v1
+  #         with:
+  #           username: ${{ secrets.DOCKER_HUB_USERNAME }}
+  #           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN  }}
+  #       - name: Setup Docker image Building
+  #         uses: docker/setup-buildx-action@v1
+  #       #building django docker image
+  #       - name: Build and Push Django Image
+  #         uses: docker/build-push-action@v2
+  #         with:
+  #           context: ./
+  #           file: ./homeservice-frontend/Dockerfile
+  #           push: true
+  #           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceAPI
+  #           cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceAPI:buildcache
+  #           cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceAPI:buildcache,mode=max
+  #       - name: Django Image digest
+  #         run: echo ${{ steps.docker_build.outputs.digest }}
+  #       #building vue docker image
+  #       - name: Build and Push Vue Image
+  #         uses: docker/build-push-action@v2
+  #         with:
+  #           context: ./
+  #           file: ./homeservice-frontend/Dockerfile
+  #           push: true
+  #           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceMPA
+  #           cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceMPA:buildcache
+  #           cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceMPA:buildcache,mode=max
+  #       - name: Vue Image digest
+  #         run: echo ${{ steps.docker_build.outputs.digest }}
+
+  deployment:
+    #     environment:
+    #       name: deployment
+    #     # env:
+    runs-on: ubuntu-latest
+    needs: [containerization]
+    #     # permissons:
+    #     #   contents: 'read'
+    #     #   id-token: 'write'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: deploy project to Heroku multiple images using docker-compose
+        id: heroku
+        uses: snithyanantham/docker-compose-multiple-apps-heroku-deploy@v1.0
+#         with:
+#           email: ${{ secrets.HEROKU_EMAIL }}
+#           api_key: ${{ secrets.HEROKU_API_KEY }}
+#           docker_compose_file: './docker-compose.yml'
+#           heroku_apps: '[{"imagename":"homeservice-be:v1.0", "appname":"", "apptype":"web"},{"imagename":"homeservice-fe:v1.0", "appname":"", "apptype":"web"}]'
+
+# name: Automate Build, Testing, Containerization and Deployment
+
+# on: [push, pull_request]
+
+# jobs:
+#   build:
+#     # environment:
+#     #   name: builds
+#     # # env:
+#     # services:
+#     #   postgresql:
+#     #     image: postgres
+#     #     env:
+#     #       POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+#     #       POSTGRES_DB: ${{ secrets.DATABASE_NAME }}_test
+#     #     ports:
+#     #       - 5432:5432
+#     #     options: >-
+#     #       --health-cmd pg_isready
+#     #       --health-interval 10s
+#     #       --health-timeout 5s
+#     #       --health-retries 5
+
+# runs-on: ubuntu-latest
+#     steps:
+#       - name: pulling git repo
+#         uses: actions/checkout@v2
+#         #for backend(django-app)
+#       - name: Checkout files
+#         uses: Bhacaz/checkout-files@v2
+#         with:
+#           files: homeservice-backend #list of files and can also be a folder
+#       - name: install python version 3.9
+#         uses: actions/setup-python@v2
+#         with:
+#           python-version: "3.9"
+#       - name: update pip
+#         run: python -m pip install --upgrade pip
+#       - name: install dependencies
+#         run: pip install -r requirements.txt
+#         #for frontend(vue-app)
+#       - name: Checkout files
+#         uses: Bhacaz/checkout-files@v2
+#         with:
+#           files: homeservice-frontend
+#       - name: install node version 16
+#         uses: actions/setup-node@v2
+#         with:
+#           node-version: "16.x"
+#       - name: install dependencies
+#         run: npm install
+
+#   test:
+#     environment:
+#       name: testing
+#     # env:
+#     # services:
+#     runs-on: ubuntu-latest
+#     needs: [build]
+#     steps:
+#     - name: Testing Applications
+#       uses: actions/checkout@v2
+#     #testing for django application
+#     - name: Testing Djnago Application
+#       run:
+#         pip install pytest
+#         pytest
+#     #testing for vue application
+#     - name: Testing Vue Application
+#       run: npm test
+
+#   containerization:
+#     environment:
+#       name: containerization
+#     # env:
+#     # services:
+#     runs-on: ubuntu-latest
+#     needs: [test]
+#     steps:
+#       - name: Dockerizing Application
+#       - name: Login to Docker Hub
+#         uses: docker/login-action@v1
+#         with:
+#           username: ${{ secrets.DOCKER_HUB_USERNAME }}
+#           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN  }}
+#       - name: Setup Docker image Building
+#         uses: docker/setup-buildx-action@v1
+#       #building django docker image
+#       - name: Build and Push Django Image
+#         uses: docker/build-push-action@v2
+#         with:
+#           context: ./
+#           file: ./homeservice-frontend/Dockerfile
+#           push: true
+#           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceAPI
+#           cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceAPI:buildcache
+#           cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceAPI:buildcache,mode=max
+#       - name: Django Image digest
+#         run: echo ${{ steps.docker_build.outputs.digest }}
+#       #building vue docker image
+#       - name: Build and Push Vue Image
+#         uses: docker/build-push-action@v2
+#         with:
+#           context: ./
+#           file: ./homeservice-frontend/Dockerfile
+#           push: true
+#           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceMPA
+#           cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceMPA:buildcache
+#           cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/homeserviceMPA:buildcache,mode=max
+#       - name: Vue Image digest
+#         run: echo ${{ steps.docker_build.outputs.digest }}
+
+#   deployment:
+#     environment:
+#       name: deployment
+#     # env:
+#     runs-on: ubuntu-latest
+#     needs: [containerization]
+#     # permissons:
+#     #   contents: 'read'
+#     #   id-token: 'write'
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#       - name: deploy project to Heroku multiple images using docker-compose
+#         id: heroku
+#         uses: snithyanantham/docker-compose-multiple-apps-heroku-deploy@v1.0
+#         with:
+#           email: ${{ secrets.HEROKU_EMAIL }}
+#           api_key: ${{ secrets.HEROKU_API_KEY }}
+#           docker_compose_file: './docker-compose.yml'
+#           heroku_apps: '[{"imagename":"homeservice-be:v1.0", "appname":"", "apptype":"web"},{"imagename":"homeservice-fe:v1.0", "appname":"", "apptype":"web"}]'
+
+# # build django, postgresql and vue app
+# # test django, postgresql and vue app
+# # containerize django, postgresql and vue app
+# # sign and push images to dockerhub
+# # pull images from dockerhub
+# # prepare heroku for containers/images
+# # deploy container/images to heroku
+
